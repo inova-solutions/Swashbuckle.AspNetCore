@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
 
 namespace CliExampleWithFactory
 {
@@ -18,7 +19,7 @@ namespace CliExampleWithFactory
         {
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info { Title = "CRUD API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "CRUD API", Version = "v1" });
             });
 
             services.AddMvc();
