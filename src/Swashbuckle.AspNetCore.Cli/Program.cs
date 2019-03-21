@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Writers;
 using Microsoft.AspNetCore;
 using Swashbuckle.AspNetCore.Swagger;
+using System.Linq;
 
 namespace Swashbuckle.AspNetCore.Cli
 {
@@ -60,13 +61,17 @@ namespace Swashbuckle.AspNetCore.Cli
                 c.Option("--basepath", "");
                 c.Option("--serializeasv2", "", true);
                 c.OnRun((namedArgs) =>
-                {
+                {                    
                     // 1) Configure host with provided startupassembly
                     var startupAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(
                         Path.Combine(Directory.GetCurrentDirectory(), namedArgs["startupassembly"]));
-                    var host = WebHost.CreateDefaultBuilder()
-                        .UseStartup(startupAssembly.FullName)
-                        .Build();
+
+                    var webHostFactory = GetISwaggerWebHostFactoryInstance(startupAssembly);
+                    
+                    var host = webHostFactory != null? webHostFactory.BuildWebHost() :
+                        WebHost.CreateDefaultBuilder()
+                               .UseStartup(startupAssembly.FullName)
+                               .Build();
 
                     // 2) Retrieve Swagger via configured provider
                     var swaggerProvider = host.Services.GetRequiredService<ISwaggerProvider>();
@@ -97,6 +102,16 @@ namespace Swashbuckle.AspNetCore.Cli
             });
 
             return runner.Run(args);
+        }
+
+        protected static ISwaggerWebHostFactory GetISwaggerWebHostFactoryInstance(Assembly assembly)
+        {
+            var factoryTypes = assembly.DefinedTypes.Where(ti => ti.ImplementedInterfaces.Contains(typeof(ISwaggerWebHostFactory)));
+            if (factoryTypes.Count() > 1) throw new InvalidOperationException("Multiple ISwaggerWebHostFactory implementations.");
+            if (!factoryTypes.Any()) return null;
+            var factoryType = factoryTypes.Single();
+            Console.WriteLine($"ISwaggerWebHostFactory factory found. Using {factoryType.FullName}.");
+            return assembly.CreateInstance(factoryType.FullName) as ISwaggerWebHostFactory;
         }
 
         private static string EscapePath(string path)
