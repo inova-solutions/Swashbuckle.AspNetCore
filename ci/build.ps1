@@ -7,6 +7,8 @@ if ($env:APPVEYOR -eq "True" -and $env:APPVEYOR_REPO_TAG -eq "false") {
 # Target folder for build artifacts (e.g. nugets)
 $ArtifactsPath = "$(pwd)" + "\artifacts"
 
+$Solution = "Swashbuckle.AspNetCore.sln"
+
 function install-dotnet-core {
     if ($env:APPVEYOR -eq "True") {
         $env:DOTNET_INSTALL_DIR = Join-Path "$(Convert-Path "$PSScriptRoot")" ".dotnetcli"
@@ -31,10 +33,10 @@ function install-redoc {
 
 function dotnet-build {
     if ($VersionSuffix.Length -gt 0) {
-        dotnet build -c Release --version-suffix $VersionSuffix
+        dotnet build $Solution -c Release --version-suffix $VersionSuffix
     }
     else {
-        dotnet build -c Release
+        dotnet build $Solution -c Release
     }
 }
 
@@ -49,7 +51,7 @@ function dotnet-pack {
     }
 }
 
-@( "install-dotnet-core", "install-swagger-ui", "install-redoc", "dotnet-build", "dotnet-pack" ) | ForEach-Object {
+@( "dotnet-build", "dotnet-pack" ) | ForEach-Object {
     echo ""
     echo "***** $_ *****"
     echo ""
