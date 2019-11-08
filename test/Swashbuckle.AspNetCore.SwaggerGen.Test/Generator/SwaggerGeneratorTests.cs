@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
-using Xunit;
-using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.Newtonsoft;
+using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerGen.Test.Fixtures.Types;
+using Xunit;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen.Test
 {
@@ -314,6 +315,25 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
             Assert.IsType<OpenApiString>(parameter.Schema.Default);
             Assert.Equal(expectedDefaultValue, ((OpenApiString)parameter.Schema.Default).Value);
         }
+        [Theory]
+        [InlineData(nameof(FakeController.AcceptsOptionalCustomTypeFromQuery), "param", "nullParam")]
+        public void GetSwagger_CustomTypeMappings_NullableWorks(
+            string actionFixtureName,
+            string parameterName,
+            string nullParameterName)
+        {
+            Action<SchemaGeneratorOptions> setupSchemaGen = opt =>
+               opt.CustomTypeMappings.Add(typeof(CustomDate), () => new OpenApiSchema { Type = "string", Format = "date" });
+
+            var subject = Subject(setupApis: apis => apis.Add("GET", "collection", actionFixtureName), setupSchemaGen: setupSchemaGen);
+
+            var swagger = subject.GetSwagger("v1");
+
+            var parameter = swagger.Paths["/collection"].Operations[OperationType.Get].Parameters.First(p => p.Name == parameterName);
+            var nullParameter = swagger.Paths["/collection"].Operations[OperationType.Get].Parameters.First(p => p.Name == nullParameterName);
+            Assert.False(parameter.Schema.Nullable);
+            Assert.True(nullParameter.Schema.Nullable);
+        }
 
         [Fact]
         public void GetSwagger_IgnoresParameters_IfApiParameterIsCancellationToken()
@@ -558,7 +578,8 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
 
         private SwaggerGenerator Subject(
             Action<FakeApiDescriptionGroupCollectionProvider> setupApis = null,
-            Action<SwaggerGeneratorOptions> setupAction = null)
+            Action<SwaggerGeneratorOptions> setupAction = null,
+            Action<SchemaGeneratorOptions> setupSchemaGen = null)
         {
             var apiDescriptionsProvider = new FakeApiDescriptionGroupCollectionProvider();
             setupApis?.Invoke(apiDescriptionsProvider);
@@ -569,6 +590,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
             setupAction?.Invoke(options);
 
             var schemaOptions = new SchemaGeneratorOptions();
+            setupSchemaGen?.Invoke(schemaOptions);
 
             return new SwaggerGenerator(
                 apiDescriptionsProvider,

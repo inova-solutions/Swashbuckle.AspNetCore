@@ -36,6 +36,17 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             {
                 return _options.CustomTypeMappings[type]();
             }
+            else if (type.IsNullable(out var valueType) && _options.CustomTypeMappings.TryGetValue(valueType, out var getSchema))
+            {
+                Func<OpenApiSchema> getNullableSchema = () =>
+                {
+                    var schema = getSchema();
+                    schema.Nullable = true;
+                    return schema;
+                };
+                _options.CustomTypeMappings.Add(type, getNullableSchema);
+                return getNullableSchema();
+            }
 
             var apiModel = _apiModelResolver.ResolveApiModelFor(type);
 

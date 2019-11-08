@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
+using Swashbuckle.AspNetCore.SwaggerGen.Test.Fixtures.Types;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen.Test
 {
@@ -86,6 +87,8 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
         { }
 
         public void AcceptsArrayFromQuery([FromQuery]IEnumerable<string> param)
+        { }
+        public void AcceptsOptionalCustomTypeFromQuery([FromQuery]CustomDate param, [FromQuery]CustomDate? nullParam = null)
         { }
 
         public void AcceptsStringFromHeader([FromHeader]string param)

@@ -281,6 +281,64 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
             Assert.Equal("string", schema.Type);
             Assert.Empty(schema.Properties);
         }
+
+        [Fact]
+        public void GenerateSchema_SupportsOptionToCustomizeSchemaForTypesAndFormats()
+        {
+            var subject = Subject(c =>
+                c.CustomTypeMappings.Add(typeof(CustomDate), () => new OpenApiSchema { Type = "string", Format = "date" })
+            );
+
+            var schema = subject.GenerateSchema(typeof(CustomDate), new SchemaRepository());
+
+            Assert.Equal("string", schema.Type);
+            Assert.Equal("date", schema.Format);
+            Assert.Empty(schema.Properties);
+        }
+
+        [Fact]
+        public void GenerateSchema_HonorsCustomTypeMappings()
+        {
+            var subject = Subject(c =>
+                c.CustomTypeMappings.Add(typeof(CustomDate), () => new OpenApiSchema { Type = "string", Format = "date" })
+            );
+            var schemaRepository = new SchemaRepository();
+            var referenceSchema = subject.GenerateSchema(typeof(JsonAnnotatedWithCustomType), schemaRepository);
+            var schema = schemaRepository.Schemas[referenceSchema.Reference.Id];
+
+            Assert.Equal(
+                new[]
+                {
+                    nameof(JsonAnnotatedWithCustomType.Date_ReqAllowNull),
+                    nameof(JsonAnnotatedWithCustomType.Date_ReqAlways),
+                    nameof(JsonAnnotatedWithCustomType.Date_ReqDefault),
+                    nameof(JsonAnnotatedWithCustomType.Date_ReqDisallowNull),
+
+                    nameof(JsonAnnotatedWithCustomType.Date_Nullable),
+                },
+                schema.Properties.Keys.ToArray());
+
+            Assert.Equal(
+                new[]
+                {
+                    nameof(JsonAnnotatedWithCustomType.Date_ReqAllowNull),
+                    nameof(JsonAnnotatedWithCustomType.Date_ReqAlways),
+                },
+                schema.Required.ToArray());
+
+            Assert.True(schema.Properties[nameof(JsonAnnotatedWithCustomType.Date_ReqAllowNull)].Nullable);
+            Assert.False(schema.Properties[nameof(JsonAnnotatedWithCustomType.Date_ReqAlways)].Nullable);
+            Assert.True(schema.Properties[nameof(JsonAnnotatedWithCustomType.Date_ReqDefault)].Nullable);
+            Assert.False(schema.Properties[nameof(JsonAnnotatedWithCustomType.Date_ReqDisallowNull)].Nullable);
+
+            Assert.True(schema.Properties[nameof(JsonAnnotatedWithCustomType.Date_Nullable)].Nullable);
+
+            foreach (var prop in schema.Properties.Values)
+            {
+                Assert.Equal("string", prop.Type);
+                Assert.Equal("date", prop.Format);
+            }
+        }
         [Fact]
         public void GenerateSchema_HonorsJsonAnnotationsForNullables()
         {
