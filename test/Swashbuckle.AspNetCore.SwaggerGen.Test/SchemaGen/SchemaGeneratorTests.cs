@@ -480,7 +480,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
                 schema.Required.ToArray());
 
             Assert.True(schema.Properties["string-with-json-property-name"].Nullable);
-            Assert.False(schema.Properties["IntWithRequiredDefault"].Nullable);
+            Assert.True(schema.Properties["IntWithRequiredDefault"].Nullable);
             Assert.True(schema.Properties["NullableIntWithRequiredDefault"].Nullable);
             Assert.True(schema.Properties["StringWithRequiredDefault"].Nullable);
             Assert.False(schema.Properties["StringWithRequiredDisallowNull"].Nullable);
