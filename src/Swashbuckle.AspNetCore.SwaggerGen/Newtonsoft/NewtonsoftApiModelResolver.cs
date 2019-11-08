@@ -158,11 +158,15 @@ namespace Swashbuckle.AspNetCore.Newtonsoft
                         ? jsonObjectContract.ItemRequired
                         : jsonProperty.Required;
 
+                    var nullable = (required == null)
+                        ? jsonProperty.PropertyType.IsReferenceOrNullableType()
+                        : (required == Required.AllowNull || required == Required.Default);
+
                     return new ApiProperty(
                         apiName: jsonProperty.PropertyName,
                         type: jsonProperty.PropertyType,
                         apiRequired: (required == Required.Always || required == Required.AllowNull),
-                        apiNullable: (required != Required.Always && required != Required.DisallowNull),
+                        apiNullable: nullable,
                         apiReadOnly: (jsonProperty.Readable && !jsonProperty.Writable),
                         apiWriteOnly: (jsonProperty.Writable && !jsonProperty.Readable),
                         memberInfo: memberInfo);

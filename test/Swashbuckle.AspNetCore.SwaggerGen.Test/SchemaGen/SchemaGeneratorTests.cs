@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using Xunit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Swashbuckle.AspNetCore.Newtonsoft;
+using Swashbuckle.AspNetCore.SwaggerGen.Test.Fixtures.Types;
+using Xunit;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen.Test
 {
@@ -279,6 +280,35 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
 
             Assert.Equal("string", schema.Type);
             Assert.Empty(schema.Properties);
+        }
+        [Fact]
+        public void GenerateSchema_HonorsJsonAnnotationsForNullables()
+        {
+            var subject = Subject();
+            var schemaRepository = new SchemaRepository();
+            var referenceSchema = subject.GenerateSchema(typeof(NullableValueType), schemaRepository);
+            var schema = schemaRepository.Schemas[referenceSchema.Reference.Id];
+
+            Assert.Equal(
+                new[]
+                {
+                    nameof(NullableValueType.IntVal_Nullable),
+                    nameof(NullableValueType.IntVal),
+                    nameof(NullableValueType.IntVal_JsonAllowNull),
+                    nameof(NullableValueType.IntVal_JsonAlways),
+                    nameof(NullableValueType.IntVal_JsonDefault),
+                    nameof(NullableValueType.IntVal_JsonDisallowNull),
+                },
+                schema.Properties.Keys.ToArray());
+
+
+            Assert.False(schema.Properties[nameof(NullableValueType.IntVal)].Nullable);
+            Assert.True(schema.Properties[nameof(NullableValueType.IntVal_Nullable)].Nullable);
+
+            Assert.True(schema.Properties[nameof(NullableValueType.IntVal_JsonAllowNull)].Nullable);
+            Assert.False(schema.Properties[nameof(NullableValueType.IntVal_JsonAlways)].Nullable);
+            Assert.True(schema.Properties[nameof(NullableValueType.IntVal_JsonDefault)].Nullable);
+            Assert.False(schema.Properties[nameof(NullableValueType.IntVal_JsonDisallowNull)].Nullable);
         }
 
         [Theory]
