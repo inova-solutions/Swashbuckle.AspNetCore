@@ -17,7 +17,7 @@ namespace Swashbuckle.AspNetCore.Newtonsoft
         private readonly IContractResolver _jsonContractResolver;
         private readonly SchemaGeneratorOptions _options;
 
-#if NETCOREAPP3_0
+#if NETCOREAPP3_1
         public NewtonsoftApiModelResolver(
             IOptions<MvcNewtonsoftJsonOptions> jsonOptionsAccessor,
             IOptions<SchemaGeneratorOptions> optionsAccessor)
